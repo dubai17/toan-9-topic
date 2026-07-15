@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vương Quốc Toán Học Lớp 2</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel CDN to compile JSX in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Tùy chỉnh hiệu ứng cuộn mượt và font chữ */
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;900&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 selection:bg-purple-200">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Trích xuất các Hook cần dùng từ React toàn cục
+        const { useState, useEffect } = React;
+
+        // --- BỘ DỮ LIỆU CÁC CHUYÊN ĐỀ (9 CHUYÊN ĐỀ) ---
+        const MODULES = [
+          { id: 1, title: 'Tư duy số', icon: 'list-ordered', color: 'bg-blue-400', shadow: 'shadow-blue-200' },
+          { id: 2, title: 'Phép tính', icon: 'calculator', color: 'bg-green-400', shadow: 'shadow-green-200' },
+          { id: 3, title: 'Toán có lời văn', icon: 'activity', color: 'bg-pink-400', shadow: 'shadow-pink-200' },
+          { id: 4, title: 'Hình học', icon: 'shapes', color: 'bg-purple-400', shadow: 'shadow-purple-200' },
+          { id: 5, title: 'Quy luật', icon: 'refresh-cw', color: 'bg-orange-400', shadow: 'shadow-orange-200' },
+          { id: 6, title: 'Thống kê', icon: 'bar-chart', color: 'bg-teal-400', shadow: 'shadow-teal-200' },
+          { id: 7, title: 'Suy luận', icon: 'lightbulb', color: 'bg-yellow-400', shadow: 'shadow-yellow-200' },
+          { id: 8, title: 'Trò chơi trí tuệ', icon: 'brain', color: 'bg-red-400', shadow: 'shadow-red-200' },
+          { id: 9, title: 'Xem giờ & thời gian', icon: 'clock', color: 'bg-indigo-400', shadow: 'shadow-indigo-200' },
+        ];
+
+        // --- COMPONENT ICON ĐỂ RENDER ĐỘNG TỪ LUCIDE ---
+        const LucideIcon = ({ name, className }) => {
+            useEffect(() => {
+                // Kích hoạt Lucide vẽ icon sau khi component render
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        // --- HÀM TẠO CÂU HỎI SIÊU NGẪU NHIÊN VỚI 10 CẤU TRÚC CHO MỖI CHUYÊN ĐỀ ---
+        const generateQuestion = (moduleId, prevType = null) => {
+          const q = { question: '', options: [], answer: '', type: 1 };
+          const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+          const shuffle = (array) => [...array].sort(() => Math.random() - 0.5);
+          
+          // Ngữ cảnh phong phú chống nhàm chán
+          const names = ['Mai', 'Lan', 'Nam', 'Phong', 'Hoa', 'Dũng', 'Vy', 'Minh', 'Khang', 'An', 'Chi', 'Đức'];
+          const items = ['bông hoa', 'viên bi', 'cái kẹo', 'quyển vở', 'chiếc bút', 'quyển truyện', 'nhãn vở', 'hộp màu'];
+          const fruits = ['quả táo', 'quả cam', 'quả xoài', 'quả chuối', 'quả dâu tây', 'quả lê', 'quả dưa hấu'];
+          
+          const getName = () => names[rand(0, names.length - 1)];
+          const getItem = () => items[rand(0, items.length - 1)];
+          const getFruit = () => fruits[rand(0, fruits.length - 1)];
+
+          // Tránh lặp cấu trúc câu hỏi liên tiếp
+          let availableTypes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(t => t !== prevType);
+          let type = availableTypes[rand(0, availableTypes.length - 1)];
+          q.type = type;
+
+          switch (moduleId) {
+            case 1: // Tư duy số
+              if (type === 1) {
+                let tram = rand(1, 9); let chuc = rand(0, 9); let dvi = rand(0, 9);
+                q.question = `Số gồm ${tram} trăm, ${chuc} chục và ${dvi} đơn vị là số nào?`;
+                q.answer = `${tram}${chuc}${dvi}`;
+                q.options = shuffle([q.answer, `${dvi}${chuc}${tram}`, `${tram}${dvi}${chuc}`]);
+              } else if (type === 2) {
+                let num = rand(101, 999);
+                let tram = Math.floor(num / 100); let chuc = Math.floor((num % 100) / 10); let dvi = num % 10;
+                q.question = `Số ${num} gồm mấy trăm, mấy chục và mấy đơn vị?`;
+                q.answer = `${tram} trăm, ${chuc} chục, ${dvi} đơn vị`;
+                q.options = shuffle([q.answer, `${dvi} trăm, ${chuc} chục, ${tram} đơn vị`, `${tram} trăm, ${dvi} chục, ${chuc} đơn vị`]);
+              } else if (type === 3) {
+                let a = rand(100, 999);
+                q.question = `Số liền trước của số ${a} là số nào?`;
+                q.answer = `${a - 1}`;
+                q.options = shuffle([q.answer, `${a + 1}`, `${a - 2}`]);
+              } else if (type === 4) {
+                let a = rand(100, 998);
+                q.question = `Số liền sau của số ${a} là số nào?`;
+                q.answer = `${a + 1}`;
+                q.options = shuffle([q.answer, `${a - 1}`, `${a + 2}`]);
+              } else if (type === 5) {
+                let n1 = rand(100, 300); let n2 = rand(301, 600); let n3 = rand(601, 999);
+                let arr = shuffle([n1, n2, n3]);
+                q.question = `Trong các số sau: ${arr.join(', ')}, số nào LỚN NHẤT?`;
+                q.answer = `${Math.max(...arr)}`;
+                q.options = shuffle([`${n1}`, `${n2}`, `${n3}`]);
+              } else if (type === 6) {
+                let n1 = rand(100, 300); let n2 = rand(301, 600); let n3 = rand(601, 999);
+                let arr = shuffle([n1, n2, n3]);
+                q.question = `Trong các số sau: ${arr.join(', ')}, số nào BÉ NHẤT?`;
+                q.answer = `${Math.min(...arr)}`;
+                q.options = shuffle([`${n1}`, `${n2}`, `${n3}`]);
+              } else if (type === 7) {
+                let a = rand(4, 9) * 10;
+                q.question = `Số tròn chục liền sau của số ${a} là số nào?`;
+                q.answer = `${a + 10}`;
+                q.options = shuffle([q.answer, `${a - 10}`, `${a + 5}`]);
+              } else if (type === 8) {
+                let textArr = [
+                  { val: 205, txt: 'Hai trăm linh năm' },
+                  { val: 415, txt: 'Bốn trăm mười lăm' },
+                  { val: 630, txt: 'Sáu trăm ba mươi' },
+                  { val: 808, txt: 'Tám trăm linh tám' },
+                  { val: 999, txt: 'Chín trăm chín mươi chín' }
+                ];
+                let pick = textArr[rand(0, textArr.length - 1)];
+                q.question = `Số "${pick.txt}" được viết bằng số là?`;
+                q.answer = `${pick.val}`;
+                q.options = shuffle([q.answer, `${pick.val - 5}`, `${pick.val + 10}`]);
+              } else if (type === 9) {
+                let start = rand(2, 6) * 10;
+                q.question = `Tìm số chẵn lớn hơn ${start} và nhỏ hơn ${start + 4}?`;
+                q.answer = `${start + 2}`;
+                q.options = shuffle([q.answer, `${start}`, `${start + 4}`]);
+              } else {
+                let start = rand(3, 8) * 10;
+                q.question = `Tìm số lẻ lớn hơn ${start} và nhỏ hơn ${start + 4}?`;
+                q.answer = `${start + 1} hoặc ${start + 3}`;
+                q.options = shuffle([q.answer, `${start + 2}`, `${start}`]);
+              }
+              break;
+
+            case 2: // Phép tính
+              if (type === 1) {
+                let a = rand(15, 65); let b = rand(15, 95 - a); 
+                if (a%10 + b%10 < 10) b += (10 - (a%10 + b%10) + rand(1, 3));
+                q.question = `Tính phép cộng có nhớ: ${a} + ${b} = ?`;
+                q.answer = `${a + b}`;
+                q.options = shuffle([q.answer, `${a + b - 10}`, `${a + b + 1}`]);
+              } else if (type === 2) {
+                let a = rand(40, 95); let b = rand(15, a - 10); 
+                if (a%10 >= b%10) b += (a%10 - b%10 + rand(1, 4));
+                q.question = `Tính phép trừ có nhớ: ${a} - ${b} = ?`;
+                q.answer = `${a - b}`;
+                q.options = shuffle([q.answer, `${a - b + 10}`, `${a - b - 1}`]);
+              } else if (type === 3) {
+                let a = rand(2, 5); let b = rand(3, 9);
+                q.question = `Tìm tích của phép nhân sau: ${a} x ${b} = ?`;
+                q.answer = `${a * b}`;
+                q.options = shuffle([q.answer, `${a * b + a}`, `${a * b - a}`]);
+              } else if (type === 4) {
+                let b = rand(2, 5); let ans = rand(3, 9); let a = b * ans;
+                q.question = `Tìm thương của phép chia sau: ${a} : ${b} = ?`;
+                q.answer = `${ans}`;
+                q.options = shuffle([q.answer, `${ans + 1}`, `${Math.max(1, ans - 1)}`]);
+              } else if (type === 5) {
+                let a = rand(10, 30); let b = rand(5, 15); let c = rand(2, 10);
+                q.question = `Tính giá trị biểu thức: ${a} + ${b} - ${c} = ?`;
+                q.answer = `${a + b - c}`;
+                q.options = shuffle([q.answer, `${a + b - c + 5}`, `${a + b - c - 2}`]);
+              } else if (type === 6) {
+                let a = rand(10, 30); let b = rand(40, 70);
+                q.question = `Điền số thích hợp vào chỗ trống: ${a} + ... = ${b}`;
+                q.answer = `${b - a}`;
+                q.options = shuffle([q.answer, `${b - a + 10}`, `${b - a - 5}`]);
+              } else if (type === 7) {
+                let a = rand(50, 90); let b = rand(10, 30);
+                q.question = `Điền số thích hợp vào ô trống: ${a} - ... = ${b}`;
+                q.answer = `${a - b}`;
+                q.options = shuffle([q.answer, `${a - b + 5}`, `${a - b - 5}`]);
+              } else if (type === 8) {
+                let a = rand(5, 15);
+                q.question = `Gấp đôi số ${a} ta được kết quả là?`;
+                q.answer = `${a * 2}`;
+                q.options = shuffle([q.answer, `${a * 2 - 1}`, `${a * 2 + 2}`]);
+              } else if (type === 9) {
+                let a = rand(3, 10) * 2;
+                q.question = `Một nửa của số ${a} bằng bao nhiêu?`;
+                q.answer = `${a / 2}`;
+                q.options = shuffle([q.answer, `${a / 2 + 1}`, `${a / 2 - 1}`]);
+              } else {
+                let a = rand(2, 5) * 10; let b = rand(2, 4) * 10;
+                q.question = `Tính nhẩm nhanh: ${a} + ${b} = ?`;
+                q.answer = `${a + b}`;
+                q.options = shuffle([q.answer, `${a + b + 10}`, `${a + b - 10}`]);
+              }
+              break;
+
+            case 3: // Lời văn
+              let nm1 = getName(); let nm2 = getName(); while(nm1 === nm2) nm2 = getName();
+              let it = getItem();
+              if (type === 1) {
+                let a = rand(15, 35); let b = rand(10, 20);
+                q.question = `${nm1} có ${a} ${it}. Mẹ tặng thêm cho ${nm1} ${b} ${it} nữa. Hỏi ${nm1} có tất cả bao nhiêu ${it}?`;
+                q.answer = `${a + b} ${it}`;
+                q.options = shuffle([q.answer, `${a - b} ${it}`, `${a + b + 5} ${it}`]);
+              } else if (type === 2) {
+                let a = rand(25, 50); let b = rand(10, 20);
+                q.question = `${nm1} có ${a} ${it}. ${nm1} tặng cho ${nm2} ${b} ${it}. Hỏi ${nm1} còn lại bao nhiêu ${it}?`;
+                q.answer = `${a - b} ${it}`;
+                q.options = shuffle([q.answer, `${a + b} ${it}`, `${a - b - 3} ${it}`]);
+              } else if (type === 3) {
+                let a = rand(20, 40); let b = rand(5, 15);
+                q.question = `Khánh có ${a} viên bi. Hà có NHIỀU HƠN Khánh ${b} viên bi. Hỏi Hà có bao nhiêu viên bi?`;
+                q.answer = `${a + b} viên bi`;
+                q.options = shuffle([q.answer, `${a - b} viên bi`, `${a + b + 2} viên bi`]);
+              } else if (type === 4) {
+                let a = rand(20, 40); let b = rand(5, 15);
+                q.question = `Lớp 2A có ${a} học sinh. Lớp 2B có ÍT HƠN lớp 2A là ${b} học sinh. Hỏi lớp 2B có bao nhiêu học sinh?`;
+                q.answer = `${a - b} học sinh`;
+                q.options = shuffle([q.answer, `${a + b} học sinh`, `${a - b + 3} học sinh`]);
+              } else if (type === 5) {
+                let a = rand(4, 9);
+                q.question = `${nm1} nuôi được ${a} chú thỏ. ${nm2} nuôi được gấp đôi số thỏ của ${nm1}. Hỏi ${nm2} nuôi được mấy chú thỏ?`;
+                q.answer = `${a * 2} chú thỏ`;
+                q.options = shuffle([q.answer, `${a + 2} chú thỏ`, `${a * 2 - 2} chú thỏ`]);
+              } else if (type === 6) {
+                let a = rand(3, 8) * 2;
+                q.question = `Có ${a} cái kẹo chia đều cho 2 anh em. Hỏi mỗi người được nhận bao nhiêu cái kẹo?`;
+                q.answer = `${a / 2} cái kẹo`;
+                q.options = shuffle([q.answer, `${a / 2 + 1} cái kẹo`, `${a / 2 - 1} cái kẹo`]);
+              } else if (type === 7) {
+                let a = rand(5, 12); let b = rand(3, 8); let c = rand(2, 6);
+                q.question = `Tổ Một có ${a} bạn, tổ Hai có ${b} bạn, tổ Ba có ${c} bạn. Hỏi cả 3 tổ có tất cả bao nhiêu bạn?`;
+                q.answer = `${a + b + c} bạn`;
+                q.options = shuffle([q.answer, `${a + b - c} bạn`, `${a + b + c + 2} bạn`]);
+              } else if (type === 8) {
+                let a = rand(6, 9); let b = rand(3, 6);
+                q.question = `Năm nay ${nm1} ${a} tuổi. Anh trai hơn ${nm1} ${b} tuổi. Hỏi năm nay anh trai bao nhiêu tuổi?`;
+                q.answer = `${a + b} tuổi`;
+                q.options = shuffle([q.answer, `${a - b} tuổi`, `${a + b + 2} tuổi`]);
+              } else if (type === 9) {
+                let a = rand(30, 50); let b = rand(10, 20);
+                q.question = `Mẹ cho ${nm1} ${a} nghìn đồng. ${nm1} mua kem hết ${b} nghìn đồng. Hỏi ${nm1} còn lại bao nhiêu nghìn đồng?`;
+                q.answer = `${a - b} nghìn đồng`;
+                q.options = shuffle([q.answer, `${a + b} nghìn đồng`, `${a - b + 5} nghìn đồng`]);
+              } else {
+                let a = rand(12, 20); let b = rand(5, 10);
+                q.question = `Một rổ có ${a} quả trứng. Mẹ đã lấy ra ${b} quả để nấu ăn. Hỏi trong rổ còn lại bao nhiêu quả trứng?`;
+                q.answer = `${a - b} quả`;
+                q.options = shuffle([q.answer, `${a + b} quả`, `${a - b - 1} quả`]);
+              }
+              break;
+
+            case 4: // Hình học
+              if (type === 1) {
+                q.question = `Hình tam giác là hình có mấy cạnh và mấy đỉnh?`;
+                q.answer = `3 cạnh và 3 đỉnh`;
+                q.options = shuffle([q.answer, `4 cạnh và 4 đỉnh`, `3 cạnh và 4 đỉnh`]);
+              } else if (type === 2) {
+                q.question = `Đoạn thẳng AB được nối từ mấy điểm?`;
+                q.answer = `2 điểm`;
+                q.options = shuffle([q.answer, `1 điểm`, `3 điểm`]);
+              } else if (type === 3) {
+                q.question = `Đồ vật nào dưới đây thường có dạng khối cầu?`;
+                q.answer = `Quả bóng đá`;
+                q.options = shuffle([q.answer, `Hộp sữa giấy`, `Lon nước ngọt`]);
+              } else if (type === 4) {
+                q.question = `Đồ vật nào dưới đây có dạng khối trụ?`;
+                q.answer = `Lon sữa bò`;
+                q.options = shuffle([q.answer, `Viên xúc xắc`, `Hộp bút hình vuông`]);
+              } else if (type === 5) {
+                let a = rand(10, 25); let b = rand(5, 15);
+                q.question = `Tính độ dài đường gấp khúc gồm hai đoạn thẳng dài ${a}cm và ${b}cm?`;
+                q.answer = `${a + b}cm`;
+                q.options = shuffle([q.answer, `${a - b}cm`, `${a + b + 5}cm`]);
+              } else if (type === 6) {
+                q.question = `Hình vuông có bao nhiêu góc vuông?`;
+                q.answer = `4 góc vuông`;
+                q.options = shuffle([q.answer, `3 góc vuông`, `2 góc vuông`]);
+              } else if (type === 7) {
+                q.question = `Hình chữ nhật có mấy cạnh dài bằng nhau và mấy cạnh ngắn bằng nhau?`;
+                q.answer = `2 cạnh dài bằng nhau, 2 cạnh ngắn bằng nhau`;
+                q.options = shuffle([q.answer, `4 cạnh bằng nhau hoàn toàn`, `3 cạnh bằng nhau`]);
+              } else if (type === 8) {
+                q.question = `Khi ghép 2 hình tam giác giống hệt nhau, chúng ta KHÔNG THỂ tạo ra hình nào dưới đây?`;
+                q.answer = `Hình tròn`;
+                q.options = shuffle([q.answer, `Hình vuông`, `Hình chữ nhật`]);
+              } else if (type === 9) {
+                q.question = `Gấp đôi một tờ giấy hình vuông lại theo đường chéo, ta được hình gì?`;
+                q.answer = `Hình tam giác`;
+                q.options = shuffle([q.answer, `Hình tròn`, `Hình chữ nhật`]);
+              } else {
+                let a = rand(15, 30); let b = rand(5, 12);
+                q.question = `Một sợi dây đồng dài ${a}cm, bé cắt đi một đoạn dài ${b}cm. Hỏi sợi dây còn lại dài bao nhiêu cm?`;
+                q.answer = `${a - b}cm`;
+                q.options = shuffle([q.answer, `${a + b}cm`, `${a - b - 2}cm`]);
+              }
+              break;
+
+            case 5: // Quy luật
+              if (type === 1) {
+                let start = rand(2, 10); let step = rand(2, 4);
+                q.question = `Tìm số tiếp theo cho dãy số tăng dần: ${start}, ${start + step}, ${start + 2*step}, ${start + 3*step}, ... ?`;
+                q.answer = `${start + 4*step}`;
+                q.options = shuffle([q.answer, `${start + 4*step - 1}`, `${start + 4*step + 2}`]);
+              } else if (type === 2) {
+                let start = rand(30, 50); let step = rand(2, 4);
+                q.question = `Tìm số tiếp theo cho dãy số giảm dần: ${start}, ${start - step}, ${start - 2*step}, ... ?`;
+                q.answer = `${start - 3*step}`;
+                q.options = shuffle([q.answer, `${start - 3*step - 1}`, `${start - 3*step + 2}`]);
+              } else if (type === 3) {
+                q.question = `Quy luật hình vẽ: 🍎 🍇 🍊 🍎 🍇 🍊 🍎 ... Quả tiếp theo là quả gì?`;
+                q.answer = `🍇 (Nho)`;
+                q.options = shuffle([q.answer, `🍊 (Cam)`, `🍎 (Táo)`]);
+              } else if (type === 4) {
+                let step = rand(2, 5) * 10;
+                q.question = `Quy luật nhảy số: ${step}, ${step*2}, ${step*3}, ... Số tiếp theo là số mấy?`;
+                q.answer = `${step*4}`;
+                q.options = shuffle([q.answer, `${step*4 - 5}`, `${step*5}`]);
+              } else if (type === 5) {
+                q.question = `Quy luật ký tự: A, B, B, A, B, B, A, ... Chữ tiếp theo là chữ gì?`;
+                q.answer = `B`;
+                q.options = shuffle([q.answer, `A`, `C`]);
+              } else if (type === 6) {
+                q.question = `Quy luật luân phiên: 1, 2, 1, 2, 1, ... Số tiếp theo là số mấy?`;
+                q.answer = `2`;
+                q.options = shuffle([q.answer, `1`, `3`]);
+              } else if (type === 7) {
+                let a = rand(1, 3);
+                q.question = `Dãy số nhân đôi: ${a}, ${a*2}, ${a*4}, ... Số tiếp theo là số mấy?`;
+                q.answer = `${a*8}`;
+                q.options = shuffle([q.answer, `${a*6}`, `${a*8 + 2}`]);
+              } else if (type === 8) {
+                q.question = `Quy luật hình học: 🔺 ⬜ 🔺 ⬜ 🔺 ... Hình tiếp theo là hình gì?`;
+                q.answer = `⬜ (Hình vuông)`;
+                q.options = shuffle([q.answer, `🔺 (Hình tam giác)`, `🟡 (Hình tròn)`]);
+              } else if (type === 9) {
+                q.question = `Quy luật ngày: Thứ Hai, Thứ Tư, Thứ Sáu, ... Ngày tiếp theo theo chu kỳ cách nhật là?`;
+                q.answer = `Chủ Nhật`;
+                q.options = shuffle([q.answer, `Thứ Bảy`, `Thứ Hai`]);
+              } else {
+                let start = rand(2, 5);
+                q.question = `Dãy số cộng dồn trước: ${start}, ${start}, ${start*2}, ${start*3}, ${start*5}, ... Số tiếp theo là?`;
+                q.answer = `${start*8}`;
+                q.options = shuffle([q.answer, `${start*7}`, `${start*10}`]);
+              }
+              break;
+
+            case 6: // Thống kê, xác suất
+              let fr = getFruit();
+              if (type === 1) {
+                q.question = `Trong hộp kín chỉ đựng toàn ${fr}. Nếu không nhìn, bé rút ra một quả. Khả năng rút được ${fr} là?`;
+                q.answer = `Chắc chắn`;
+                q.options = shuffle([q.answer, `Có thể`, `Không thể`]);
+              } else if (type === 2) {
+                let fr2 = getFruit(); while(fr2 === fr) fr2 = getFruit();
+                q.question = `Trong túi chỉ đựng toàn ${fr}. Bé thò tay bốc một quả. Khả năng bốc được ${fr2} là?`;
+                q.answer = `Không thể`;
+                q.options = shuffle([q.answer, `Chắc chắn`, `Có thể`]);
+              } else if (type === 3) {
+                let fr2 = getFruit(); while(fr2 === fr) fr2 = getFruit();
+                q.question = `Trong khay có cả ${fr} và ${fr2}. Bé nhắm mắt lấy 1 quả. Khả năng lấy được ${fr} là?`;
+                q.answer = `Có thể`;
+                q.options = shuffle([q.answer, `Chắc chắn`, `Không thể`]);
+              } else if (type === 4) {
+                let a = rand(3, 7); let b = rand(2, 6);
+                q.question = `Tổ Một có ${a} bạn nuôi mèo, ${b} bạn nuôi chó. Có bao nhiêu bạn nuôi thú cưng trong tổ?`;
+                q.answer = `${a + b} bạn`;
+                q.options = shuffle([q.answer, `${Math.abs(a-b)} bạn`, `${a + b + 2} bạn`]);
+              } else if (type === 5) {
+                let step = rand(2, 4);
+                q.question = `Mỗi sticker 💖 tương ứng với ${step} điểm tốt. Bé có 3 sticker 💖💖💖. Bé có tất cả mấy điểm tốt?`;
+                q.answer = `${step * 3} điểm`;
+                q.options = shuffle([q.answer, `${step * 2} điểm`, `${step * 4} điểm`]);
+              } else if (type === 6) {
+                let a = rand(10, 20); let b = rand(5, 9);
+                q.question = `Biểu đồ lớp học: Có ${a} bạn thích ăn Táo, ${b} bạn thích ăn Cam. Trái cây nào được yêu thích nhiều nhất?`;
+                q.answer = `Táo`;
+                q.options = shuffle([q.answer, `Cam`, `Bằng nhau`]);
+              } else if (type === 7) {
+                let a = rand(5, 10); let b = rand(12, 20);
+                q.question = `Trong tủ đồ: có ${a} chiếc áo đỏ và ${b} chiếc áo xanh. Loại áo nào ít hơn?`;
+                q.answer = `Áo đỏ`;
+                q.options = shuffle([q.answer, `Áo xanh`, `Ngang nhau`]);
+              } else if (type === 8) {
+                let v = rand(4, 9);
+                q.question = `Bảng kiểm đếm vạch ghi nhận: "||||" là 4 vạch. Nếu bé có "${"|".repeat(v)}" thì có bao nhiêu vạch?`;
+                q.answer = `${v} vạch`;
+                q.options = shuffle([q.answer, `${v - 1} vạch`, `${v + 2} vạch`]);
+              } else if (type === 9) {
+                q.question = `Ngày mai mặt trời sẽ mọc ở hướng Đông. Sự kiện này thuộc khả năng nào?`;
+                q.answer = `Chắc chắn`;
+                q.options = shuffle([q.answer, `Có thể`, `Không thể`]);
+              } else {
+                q.question = `Bé tung một đồng xu lên cao. Khả năng đồng xu rơi xuống mặt đất và hiện mặt ngửa là?`;
+                q.answer = `Có thể`;
+                q.options = shuffle([q.answer, `Chắc chắn`, `Không thể`]);
+              }
+              break;
+
+            case 7: // Suy luận
+              let p1 = getName(); let p2 = getName(); let p3 = getName();
+              while(p1===p2 || p2===p3 || p1===p3) { p2 = getName(); p3 = getName(); }
+              if (type === 1) {
+                let a = rand(10, 30); let ans = rand(10, 30); let sum = a + ans;
+                q.question = `Số bí mật nào cộng với ${a} thì cho kết quả đúng bằng ${sum}?`;
+                q.answer = `${ans}`;
+                q.options = shuffle([q.answer, `${ans + 10}`, `${Math.max(1, ans - 5)}`]);
+              } else if (type === 2) {
+                let a = rand(40, 80); let ans = rand(10, 30); let diff = a - ans;
+                q.question = `Số ${a} trừ đi số bí mật nào thì còn lại kết quả là ${diff}?`;
+                q.answer = `${ans}`;
+                q.options = shuffle([q.answer, `${ans + 10}`, `${Math.max(1, ans - 5)}`]);
+              } else if (type === 3) {
+                q.question = `${p1} cao hơn ${p2}. Bạn ${p2} lại cao hơn bạn ${p3}. Hỏi ai cao nhất?`;
+                q.answer = p1;
+                q.options = shuffle([p1, p2, p3]);
+              } else if (type === 4) {
+                q.question = `Hộp quà đỏ nặng hơn hộp quà vàng. Hộp vàng nặng hơn hộp xanh. Hỏi hộp nào nhẹ nhất?`;
+                q.answer = `Hộp quà xanh`;
+                q.options = shuffle([q.answer, `Hộp quà vàng`, `Hộp quà đỏ`]);
+              } else if (type === 5) {
+                let low = rand(15, 45);
+                q.question = `Tôi là một số lớn hơn ${low} nhưng lại nhỏ hơn ${low + 2}. Hỏi tôi là số mấy?`;
+                q.answer = `${low + 1}`;
+                q.options = shuffle([q.answer, `${low}`, `${low + 2}`]);
+              } else if (type === 6) {
+                q.question = `Bé Na không đội mũ đỏ, bé Vy không đội mũ vàng. Biết bé Na đội mũ xanh. Hỏi bé Vy đội mũ màu gì?`;
+                q.answer = `Mũ vàng hoặc mũ đỏ`;
+                q.options = shuffle([q.answer, `Mũ xanh`, `Không đội mũ`]);
+              } else if (type === 7) {
+                q.question = `Một quả táo nặng bằng 2 quả dâu tây. Vậy 3 quả táo sẽ nặng bằng bao nhiêu quả dâu tây?`;
+                q.answer = `6 quả dâu tây`;
+                q.options = shuffle([q.answer, `4 quả dâu tây`, `5 quả dâu tây`]);
+              } else if (type === 8) {
+                q.question = `Thỏ chạy nhanh hơn Rùa, Rùa chạy nhanh hơn Sên. Hỏi ai chạy chậm nhất?`;
+                q.answer = `Sên`;
+                q.options = shuffle([q.answer, `Rùa`, `Thỏ`]);
+              } else if (type === 9) {
+                q.question = `Mẹ để quả táo trong một chiếc hộp màu đỏ, chiếc hộp màu xanh thì rỗng. Hỏi quả táo nằm ở đâu?`;
+                q.answer = `Hộp màu đỏ`;
+                q.options = shuffle([q.answer, `Hộp màu xanh`, `Cả hai hộp`]);
+              } else {
+                q.question = `Có 3 quả bóng xanh, vàng, đỏ đựng trong 3 hộp khác nhau. Hộp 1 không chứa bóng đỏ, Hộp 2 chứa bóng xanh. Vậy bóng đỏ nằm ở đâu?`;
+                q.answer = `Hộp 3`;
+                q.options = shuffle([`Hộp 1`, `Hộp 2`, `Hộp 3`]);
+              }
+              break;
+
+            case 8: // Trò chơi trí tuệ
+              if (type === 1) {
+                let d = rand(2, 5);
+                q.question = `Hôm nay là Thứ Hai. Hỏi đúng ${d} ngày nữa sẽ là Thứ mấy trong tuần?`;
+                let days = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+                let ansDay = days[d % 7];
+                q.answer = ansDay;
+                q.options = shuffle([ansDay, days[(d + 1) % 7], days[(d + 2) % 7]]);
+              } else if (type === 2) {
+                let c = rand(2, 5);
+                q.question = `Một chú cún có 4 cái chân. Hỏi ${c} chú cún như vậy sẽ có bao nhiêu cái chân?`;
+                q.answer = `${c * 4} cái chân`;
+                q.options = shuffle([q.answer, `${c * 4 + 2} cái chân`, `${c * 4 - 2} cái chân`]);
+              } else if (type === 3) {
+                let c = rand(3, 6);
+                q.question = `Một chú chim bồ câu có 2 chân. Hỏi ${c} chú chim bồ câu như vậy có mấy cái chân?`;
+                q.answer = `${c * 2} cái chân`;
+                q.options = shuffle([q.answer, `${c * 2 + 2} cái chân`, `${c * 2 - 2} cái chân`]);
+              } else if (type === 4) {
+                q.question = `Một chục quả trứng gà và thêm 5 quả nữa là bao nhiêu quả trứng?`;
+                q.answer = `15 quả`;
+                q.options = shuffle([q.answer, `10 quả`, `20 quả`]);
+              } else if (type === 5) {
+                let start = rand(4, 9); let left = rand(1, 3); let add = rand(2, 4);
+                q.question = `Trên cành có ${start} con chim, ${left} con bay đi, rồi ${add} con bay tới đậu. Hỏi trên cành có mấy con chim?`;
+                q.answer = `${start - left + add} con`;
+                q.options = shuffle([q.answer, `${start - left} con`, `${start + add} con`]);
+              } else if (type === 6) {
+                q.question = `Có 3 bạn nhỏ cùng bắt tay nhau chào hỏi nhau thân thiện. Hỏi có tất cả bao nhiêu cái bắt tay?`;
+                q.answer = `3 cái bắt tay`;
+                q.options = shuffle([q.answer, `6 cái bắt tay`, `2 cái bắt tay`]);
+              } else if (type === 7) {
+                let c = rand(2, 4);
+                q.question = `Cần cắt một sợi dây thành ${c} đoạn bằng nhau. Hỏi bé phải thực hiện bao nhiêu nhát cắt?`;
+                q.answer = `${c - 1} nhát cắt`;
+                q.options = shuffle([q.answer, `${c} nhát cắt`, `${c + 1} nhát cắt`]);
+              } else if (type === 8) {
+                q.question = `Trong một ngày, có mấy lần đồng hồ chỉ đúng 12 giờ trưa?`;
+                q.answer = `1 lần`;
+                q.options = shuffle([q.answer, `2 lần`, `24 lần`]);
+              } else if (type === 9) {
+                q.question = `Mẹ mua về 1 chục quả táo. Bé ăn mất 2 quả. Hỏi nhà mình còn lại bao nhiêu quả táo?`;
+                q.answer = `8 quả`;
+                q.options = shuffle([q.answer, `10 quả`, `12 quả`]);
+              } else {
+                q.question = `Có 5 quả táo nằm trong rổ. Làm sao chia cho 5 bạn, mỗi bạn được 1 quả mà trong rổ vẫn còn 1 quả?`;
+                q.answer = `Đưa quả táo cuối cùng nằm trong rổ cho bạn thứ nam`;
+                q.options = shuffle([q.answer, `Cắt đôi một quả táo`, `Mua thêm một quả nữa`]);
+              }
+              break;
+
+            case 9: // Xem giờ & thời gian
+              if (type === 1) {
+                let h = rand(1, 11);
+                q.question = `Đồng hồ có kim ngắn chỉ số ${h}, kim dài chỉ đúng số 12. Hỏi lúc này là mấy giờ?`;
+                q.answer = `${h} giờ`;
+                q.options = shuffle([q.answer, `${h} giờ 30 phút`, `${h + 1} giờ`]);
+              } else if (type === 2) {
+                let h = rand(1, 11);
+                q.question = `Đồng hồ có kim ngắn chỉ ở giữa số ${h} và số ${h+1}, kim dài chỉ đúng số 6. Hỏi lúc này là mấy giờ?`;
+                q.answer = `${h} giờ rưỡi (hoặc ${h} giờ 30 phút)`;
+                q.options = shuffle([q.answer, `${h} giờ đúng`, `${h+1} giờ rưỡi`]);
+              } else if (type === 3) {
+                q.question = `Một giờ đồng hồ có bao nhiêu phút?`;
+                q.answer = `60 phút`;
+                q.options = shuffle([q.answer, `30 phút`, `12 phút`]);
+              } else if (type === 4) {
+                q.question = `Một phút đồng hồ có bao nhiêu giây?`;
+                q.answer = `60 giây`;
+                q.options = shuffle([q.answer, `30 giây`, `100 giây`]);
+              } else if (type === 5) {
+                let h = rand(6, 9); let offset = rand(1, 3);
+                q.question = `Bây giờ là ${h} giờ đúng. Sau ${offset} giờ nữa sẽ là mấy giờ?`;
+                q.answer = `${h + offset} giờ`;
+                q.options = shuffle([q.answer, `${h - offset} giờ`, `${h + offset + 1} giờ`]);
+              } else if (type === 6) {
+                let h = rand(5, 10); let offset = rand(1, 3);
+                q.question = `Bây giờ là ${h} giờ đúng. Hỏi ${offset} giờ trước đây là mấy giờ?`;
+                q.answer = `${h - offset} giờ`;
+                q.options = shuffle([q.answer, `${h + offset} giờ`, `${h - offset - 1} giờ`]);
+              } else if (type === 7) {
+                q.question = `Bé thường chuẩn bị đi ngủ tối lúc mấy giờ là hợp lý và bảo vệ sức khỏe nhất?`;
+                q.answer = `9 giờ tối (21 giờ)`;
+                q.options = shuffle([q.answer, `9 giờ sáng`, `12 giờ đêm`]);
+              } else if (type === 8) {
+                let h = rand(1, 5);
+                q.question = `Hệ thống giờ 24h: Lúc ${h + 12} giờ chiều còn được gọi là mấy giờ?`;
+                q.answer = `${h} giờ chiều`;
+                q.options = shuffle([q.answer, `${h + 2} giờ chiều`, `${h} giờ sáng`]);
+              } else if (type === 9) {
+                let start = rand(7, 9); let end = start + rand(1, 2);
+                q.question = `Bé bắt đầu học bài từ lúc ${start} giờ và hoàn thành vào lúc ${end} giờ. Hỏi bé học trong mấy giờ?`;
+                q.answer = `${end - start} giờ`;
+                q.options = shuffle([q.answer, `${end} giờ`, `${end - start + 1} giờ`]);
+              } else {
+                let h = rand(1, 12);
+                q.question = `Đồng hồ chỉ kim ngắn ở số ${h} và kim dài chỉ số 3. Hỏi là ${h} giờ bao nhiêu phút?`;
+                q.answer = `${h} giờ 15 phút`;
+                q.options = shuffle([q.answer, `${h} giờ 5 phút`, `${h} giờ 30 phút`]);
+              }
+              break;
+
+            default:
+              q.question = 'Lỗi hệ thống tải câu hỏi!';
+          }
+          return q;
+        };
+
+        // --- COMPONENT CHÍNH APP ---
+        function App() {
+          const [screen, setScreen] = useState('home'); // home, quiz, result
+          const [currentModule, setCurrentModule] = useState(null);
+          const [coins, setCoins] = useState(205); // Số xu hiện tại khởi tạo theo ảnh thiết kế
+          const [streak, setStreak] = useState(4); // Số ngày Streak theo thiết kế
+          
+          // Trạng thái lưu trữ của màn làm bài
+          const [questions, setQuestions] = useState([]); // Chứa đúng 10 câu hỏi
+          const [userAnswers, setUserAnswers] = useState(new Array(10).fill(null)); // Lưu đáp án đã chọn
+          const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // Chỉ số câu hiện tại (0-9)
+
+          // Bắt đầu một chuyên đề mới (luôn tạo đúng 10 câu hỏi mới)
+          const startModule = (module, isReview = false) => {
+            const targetModule = isReview ? MODULES[Math.floor(Math.random() * MODULES.length)] : module;
+            setCurrentModule(targetModule);
+            
+            // Sinh ngẫu nhiên 10 câu hỏi khác nhau liên tiếp
+            const sessionQuestions = [];
+            let prevType = null;
+            for (let i = 0; i < 10; i++) {
+              const q = generateQuestion(targetModule.id, prevType);
+              sessionQuestions.push(q);
+              prevType = q.type;
+            }
+
+            setQuestions(sessionQuestions);
+            setUserAnswers(new Array(10).fill(null));
+            setCurrentQuestionIndex(0);
+            setScreen('quiz');
+          };
+
+          // Chọn đáp án
+          const handleSelectAnswer = (ans) => {
+            // Nếu câu này đã được trả lời rồi thì không cho chọn lại nữa
+            if (userAnswers[currentQuestionIndex] !== null) return;
+
+            const updatedAnswers = [...userAnswers];
+            updatedAnswers[currentQuestionIndex] = ans;
+            setUserAnswers(updatedAnswers);
+
+            // Thưởng xu nếu đúng ngay lập tức
+            if (ans === questions[currentQuestionIndex].answer) {
+              setCoins(prev => prev + 5);
+            }
+          };
+
+          // Nút lùi lại
+          const handlePrev = () => {
+            if (currentQuestionIndex > 0) {
+              setCurrentQuestionIndex(prev => prev - 1);
+            }
+          };
+
+          // Nút tiến lên
+          const handleNext = () => {
+            if (currentQuestionIndex < 9) {
+              setCurrentQuestionIndex(prev => prev + 1);
+            }
+          };
+
+          // Kết thúc bài làm
+          const handleFinish = () => {
+            setScreen('result');
+          };
+
+          const goHome = () => {
+            setScreen('home');
+            setCurrentModule(null);
+          };
+
+          // Tính điểm tổng kết
+          const getScore = () => {
+            let score = 0;
+            questions.forEach((q, i) => {
+              if (userAnswers[i] === q.answer) {
+                score++;
+              }
+            });
+            return score;
+          };
+
+          return (
+            <div className="min-h-screen bg-slate-100 flex justify-center">
+              <div className="w-full max-w-md bg-white min-h-screen shadow-2xl relative overflow-hidden flex flex-col">
+                
+                {/* BACKGROUND DECORATION */}
+                <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-b-[40px] z-0"></div>
+                <div className="absolute top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl z-0"></div>
+                <div className="absolute top-20 -left-10 w-24 h-24 bg-white/10 rounded-full blur-xl z-0"></div>
+
+                {/* HEADER */}
+                <div className="relative z-10 p-5 pt-8 flex justify-between items-center text-white">
+                  <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/30">
+                    <LucideIcon name="trophy" className="w-5 h-5 text-yellow-300" />
+                    <span className="font-bold">{coins} Xu</span>
+                  </div>
+                  <div className="text-xl font-black tracking-wider text-center flex-1">
+                    MATH KINGDOM
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/30">
+                    <LucideIcon name="star" className="w-5 h-5 text-orange-300 fill-current" />
+                    <span className="font-bold">{streak} Ngày</span>
+                  </div>
+                </div>
+
+                {/* --- MÀN HÌNH CHÍNH (HOME) --- */}
+                {screen === 'home' && (
+                  <div className="relative z-10 flex-1 overflow-y-auto pb-20 px-5">
+                    
+                    {/* Chào mừng bé */}
+                    <div className="bg-white rounded-3xl p-5 shadow-lg mb-6 mt-2 flex items-center justify-between border-2 border-indigo-50">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-800">Chào bé yêu! 👋</h2>
+                        <p className="text-xs text-slate-500 mt-1 flex items-center">
+                          <LucideIcon name="calendar" className="w-4 h-4 mr-1 text-indigo-500" /> Hãy chinh phục thử thách 10 câu nhé!
+                        </p>
+                        <div className="mt-3 flex items-center space-x-2">
+                          <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="w-2/3 h-full bg-gradient-to-r from-green-400 to-emerald-500"></div>
+                          </div>
+                          <span className="text-xs font-bold text-emerald-600">Tuyệt vời!</span>
+                        </div>
+                      </div>
+                      <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center shadow-inner">
+                        <LucideIcon name="rocket" className="w-8 h-8 text-indigo-500 animate-bounce" />
+                      </div>
+                    </div>
+
+                    {/* Ôn tập hàng ngày */}
+                    <button 
+                      onClick={() => startModule(null, true)}
+                      className="w-full mb-6 bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-2xl p-4 shadow-lg shadow-orange-200 flex items-center justify-between hover:scale-[1.02] transition-transform active:scale-95"
+                    >
+                      <div className="flex items-center">
+                        <div className="bg-white/30 p-2 rounded-xl mr-3">
+                          <LucideIcon name="refresh-cw" className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="font-bold text-base">Thử thách hỗn hợp</h3>
+                          <p className="text-xs opacity-95">Trộn ngẫu nhiên câu hỏi ôn bài cũ</p>
+                        </div>
+                      </div>
+                      <div className="bg-white text-orange-500 font-bold px-3 py-1 rounded-full text-xs shadow-sm">
+                        Bắt đầu
+                      </div>
+                    </button>
+
+                    {/* Tiêu đề bản đồ */}
+                    <h3 className="font-bold text-slate-800 text-base mb-4 flex items-center">
+                      <LucideIcon name="compass" className="w-5 h-5 mr-2 text-indigo-500" /> BẢN ĐỒ TRI THỨC LỚP 2
+                    </h3>
+                    
+                    {/* Danh sách 9 Chuyên đề */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {MODULES.map((mod) => (
+                        <button 
+                          key={mod.id} 
+                          onClick={() => startModule(mod)}
+                          className="bg-white rounded-2xl p-4 flex flex-col items-center justify-center shadow-md hover:shadow-xl transition-all border-b-4 border-slate-100 hover:border-indigo-100 active:translate-y-1 active:border-b-0 group"
+                        >
+                          <div className={`w-12 h-12 ${mod.color} rounded-xl flex items-center justify-center text-white mb-2 shadow-lg ${mod.shadow} group-hover:scale-110 transition-transform`}>
+                            <LucideIcon name={mod.icon} className="w-6 h-6" />
+                          </div>
+                          <span className="font-bold text-slate-700 text-center text-xs leading-tight min-h-[32px] flex items-center">
+                            {mod.title}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* --- MÀN HÌNH QUIZ (CÂU HỎI) --- */}
+                {screen === 'quiz' && questions.length > 0 && (
+                  <div className="relative z-10 flex-1 flex flex-col px-5 pb-5">
+                    
+                    {/* Thanh tiến trình Progress Bar */}
+                    <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+                      <button onClick={goHome} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
+                        <LucideIcon name="chevron-left" className="w-4 h-4" />
+                      </button>
+                      <div className="flex-1 px-4">
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${currentModule ? currentModule.color : 'bg-orange-400'} transition-all duration-500`}
+                            style={{ width: `${((currentQuestionIndex + 1) / 10) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="font-bold text-slate-600 text-xs">
+                        Câu {currentQuestionIndex + 1}/10
+                      </div>
+                    </div>
+
+                    {/* Nội dung câu hỏi */}
+                    <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-indigo-50 mb-4 min-h-[160px] flex flex-col justify-center relative">
+                      <div className={`absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 ${currentModule ? currentModule.color : 'bg-orange-400'} rounded-full border-4 border-white flex items-center justify-center text-white shadow-md`}>
+                        {currentModule ? <LucideIcon name={currentModule.icon} className="w-5 h-5" /> : <LucideIcon name="refresh-cw" className="w-5 h-5" />}
+                      </div>
+                      <h2 className="text-base font-bold text-slate-800 text-center mt-3 leading-relaxed">
+                        {questions[currentQuestionIndex].question}
+                      </h2>
+                    </div>
+
+                    {/* Danh sách các đáp án */}
+                    <div className="space-y-3 flex-1">
+                      {questions[currentQuestionIndex].options.map((opt, idx) => {
+                        let btnStyle = "bg-white border-2 border-slate-150 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 shadow-sm";
+                        let icon = null;
+
+                        const chosen = userAnswers[currentQuestionIndex];
+                        const correctAns = questions[currentQuestionIndex].answer;
+
+                        if (chosen !== null) {
+                          if (opt === correctAns) {
+                            btnStyle = "bg-green-50 border-2 border-green-500 text-green-800 shadow-md";
+                            icon = <LucideIcon name="check-circle-2" className="w-5 h-5 text-green-600" />;
+                          } else if (opt === chosen) {
+                            btnStyle = "bg-red-50 border-2 border-red-500 text-red-800 shadow-md";
+                            icon = <LucideIcon name="x-circle" className="w-5 h-5 text-red-600" />;
+                          } else {
+                            btnStyle = "bg-slate-50 border-2 border-slate-100 text-slate-400 opacity-60";
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={idx}
+                            disabled={chosen !== null}
+                            onClick={() => handleSelectAnswer(opt)}
+                            className={`w-full p-4 rounded-xl font-bold text-sm text-left flex justify-between items-center transition-all duration-200 active:scale-95 ${btnStyle}`}
+                          >
+                            <span>{opt}</span>
+                            {icon}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* BỘ NÚT ĐIỀU HƯỚNG */}
+                    <div className="flex gap-4 mt-4">
+                      <button
+                        onClick={handlePrev}
+                        disabled={currentQuestionIndex === 0}
+                        className="flex-1 py-3 px-4 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-slate-200 disabled:opacity-50 transition-all active:scale-95"
+                      >
+                        <LucideIcon name="chevron-left" className="w-4 h-4" /> Lùi lại
+                      </button>
+
+                      {currentQuestionIndex < 9 ? (
+                        <button
+                          onClick={handleNext}
+                          disabled={userAnswers[currentQuestionIndex] === null}
+                          className="flex-1 py-3 px-4 bg-indigo-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 transition-all active:scale-95"
+                        >
+                          Tiếp theo <LucideIcon name="chevron-right" className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleFinish}
+                          disabled={userAnswers[9] === null}
+                          className="flex-1 py-3 px-4 bg-green-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1 hover:bg-green-600 disabled:bg-slate-200 disabled:text-slate-400 transition-all active:scale-95"
+                        >
+                          Xem kết quả 🎉
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* --- MÀN HÌNH KẾT QUẢ --- */}
+                {screen === 'result' && (
+                  <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center animate-in fade-in zoom-in duration-500">
+                    <div className="w-24 h-24 mb-4 relative">
+                      <div className="absolute inset-0 bg-yellow-300 rounded-full animate-ping opacity-20"></div>
+                      <div className="relative w-full h-full bg-gradient-to-br from-yellow-300 to-orange-500 rounded-full flex items-center justify-center shadow-xl border-4 border-white">
+                        <LucideIcon name="trophy" className="w-12 h-12 text-white" />
+                      </div>
+                    </div>
+                    
+                    <h1 className="text-3xl font-black text-slate-800 mb-1">Hoàn Thành!</h1>
+                    <p className="text-slate-500 font-bold text-sm mb-6">Chuyên đề: {currentModule ? currentModule.title : 'Thử thách hỗn hợp'}</p>
+
+                    <div className="bg-white w-full p-5 rounded-2xl shadow-lg border-2 border-slate-50 mb-6 space-y-3">
+                      <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
+                        <span className="font-bold text-slate-500 text-sm">Số câu đúng</span>
+                        <span className="text-lg font-black text-green-500">{getScore()} / 10</span>
+                      </div>
+                      <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
+                        <span className="font-bold text-slate-500 text-sm">Điểm thưởng xu</span>
+                        <span className="text-lg font-black text-yellow-500 flex items-center">
+                          +{getScore() * 5} <LucideIcon name="trophy" className="w-4 h-4 ml-1" />
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full space-y-3">
+                      <button 
+                        onClick={() => startModule(currentModule, currentModule ? false : true)}
+                        className="w-full bg-green-500 text-white font-bold text-base p-4 rounded-xl shadow-md hover:bg-green-600 transition-colors active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <LucideIcon name="refresh-cw" className="w-5 h-5" /> Tiếp tục luyện chuyên đề này
+                      </button>
+
+                      <button 
+                        onClick={goHome}
+                        className="w-full bg-indigo-600 text-white font-bold text-base p-4 rounded-xl shadow-md hover:bg-indigo-700 transition-colors active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        Quay lại bản đồ tri thức
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          );
+        }
+
+        // Render ứng dụng vào DOM
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
